@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -38,8 +39,7 @@ ROOT_URLCONF = 'dacia_sandero_rent.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -62,6 +62,8 @@ DATABASES = {
     }
 }
 
+
+AUTH_USER_MODEL = "rent.Client"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
