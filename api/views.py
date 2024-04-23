@@ -18,15 +18,15 @@ class LoginView(APIView):
     def post(self, request: Request):
         if request.user.is_authenticated:
             return Response({
-                "status": "error",
+                "success": False,
                 "message": "You are already authenticated",
             }, status=status.HTTP_400_BAD_REQUEST)
         login_ = request.data.get('login')
         password = request.data.get('password')
         if not login_ or not password:
             return Response({
-                'status': 'error',
-                'message': 'Please fill out the form completely',
+                "success": False,
+                "message": "Please fill out the form completely",
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -38,13 +38,13 @@ class LoginView(APIView):
 
         except Client.DoesNotExist:
             return Response({
-                "status": "error",
+                "success": False,
                 "message": "Invalid Credentials",
             }, status=status.HTTP_400_BAD_REQUEST)
 
         login(request, user)
         return Response({
-            "status": "success",
+            "success": True,
             "message": "You are logged in",
         })
 
@@ -57,7 +57,7 @@ class RegisterView(APIView):
         password_check = request.data.get('passwordCheck')
         if not username or not password or not password_check or not email:
             return Response({
-                "status": "error",
+                "success": False,
                 "message": "Please fill form",
             }, status=status.HTTP_400_BAD_REQUEST)
         if password != password_check:
@@ -67,13 +67,13 @@ class RegisterView(APIView):
             EmailValidator()(email)
         except ValidationError:
             return Response({
-                "status": "error",
+                "success": False,
                 "message": "Email address is not valid",
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if Client.objects.filter(Q(username=username) | Q(email=email.lower())).exists():
             return Response({
-                "status": "error",
+                "success": "error",
                 "message": "User with this email address or username already exists",
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -87,7 +87,7 @@ class RegisterView(APIView):
                 validator.validate(password, user)
         except ValidationError as e:
             return Response({
-                "status": "error",
+                "success": False,
                 "message": str(e),
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -96,6 +96,6 @@ class RegisterView(APIView):
 
         login(request, user)
         return Response({
-            "status": "success",
+            "success": True,
             "message": "Your account successfully registered",
         }, status=status.HTTP_201_CREATED)
