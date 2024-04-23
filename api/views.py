@@ -1,6 +1,6 @@
 
 
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.password_validation import (UserAttributeSimilarityValidator, MinimumLengthValidator,
                                                      CommonPasswordValidator, NumericPasswordValidator)
 from django.core.validators import EmailValidator
@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from .models import Client
 
 
-class GetMe(APIView):
+class GetMeView(APIView):
     def get(self, request: Request):
         if request.user.is_authenticated:
             return Response({"success": True, "data": request.user.json()})
@@ -53,6 +53,7 @@ class LoginView(APIView):
         return Response({
             "success": True,
             "message": "You are logged in",
+            "data": user.json()
         })
 
 
@@ -105,5 +106,12 @@ class RegisterView(APIView):
         return Response({
             "success": True,
             "message": "Your account successfully registered",
-            "username": user.username,
+            "data": user.json(),
         }, status=status.HTTP_201_CREATED)
+
+
+class LogoutView(APIView):
+    def get(self, request: Request):
+        if request.user.is_authenticated:
+            logout(request)
+        return Response({"success": True})
