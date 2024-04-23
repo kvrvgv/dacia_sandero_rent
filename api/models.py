@@ -15,17 +15,23 @@ class Client(AbstractUser):
         }
 
 
+class TransportType(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class TransportClass(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Transport(models.Model):
-    type = models.IntegerField(
-        choices=models.IntegerChoices(
-            "TransportType", "VEHICLE BICYCLE GYRO_SCOOTER MOTORCYCLE"
-        )
-    )
-    classification = models.IntegerField(
-        choices=models.IntegerChoices(
-            "TransportClassification", "ECONOM COMFORT BUSINESS ELITE"
-        )
-    )
+    type = models.ForeignKey("TransportType", on_delete=models.CASCADE)
+    classification = models.ForeignKey("TransportClass", on_delete=models.CASCADE)
     parking = models.ForeignKey("ParkingStation", on_delete=models.SET_NULL, null=True)
     fuel = models.IntegerField(
         verbose_name="Fuel (percent)",
