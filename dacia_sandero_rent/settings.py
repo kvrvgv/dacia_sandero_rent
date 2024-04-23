@@ -21,7 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "rent.apps.RentConfig",
+    "api.apps.ApiConfig",
 ]
 
 MIDDLEWARE = [
@@ -63,7 +63,7 @@ DATABASES = {
 }
 
 
-AUTH_USER_MODEL = "rent.Client"
+AUTH_USER_MODEL = "api.Client"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
