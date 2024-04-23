@@ -14,6 +14,13 @@ from rest_framework.views import APIView
 from .models import Client
 
 
+class GetMe(APIView):
+    def get(self, request: Request):
+        if request.user.is_authenticated:
+            return Response({"success": True, "data": request.user.json()})
+        return Response({"success": False, "message": "You are not logged in"})
+
+
 class LoginView(APIView):
     def post(self, request: Request):
         if request.user.is_authenticated:
@@ -98,4 +105,5 @@ class RegisterView(APIView):
         return Response({
             "success": True,
             "message": "Your account successfully registered",
+            "username": user.username,
         }, status=status.HTTP_201_CREATED)

@@ -8,6 +8,12 @@ from django.db import models
 class Client(AbstractUser):
     rating = models.IntegerField(default=50, validators=[MinValueValidator(1), MaxValueValidator(100)])
 
+    def json(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+        }
+
 
 class Transport(models.Model):
     type = models.IntegerField(
