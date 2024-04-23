@@ -21,9 +21,9 @@ class LoginView(APIView):
                 "status": "error",
                 "message": "You are already authenticated",
             }, status=status.HTTP_400_BAD_REQUEST)
-        username_or_email = request.data.get('username')
+        login_ = request.data.get('login')
         password = request.data.get('password')
-        if not username_or_email or not password:
+        if not login_ or not password:
             return Response({
                 'status': 'error',
                 'message': 'Please fill out the form completely',
@@ -32,9 +32,7 @@ class LoginView(APIView):
         try:
             if len(password) < 8:
                 raise Client.DoesNotExist()
-            user = Client.objects.filter(
-                Q(username=username_or_email) | Q(email=username_or_email.lower())
-            ).get()
+            user = Client.objects.filter(Q(username=login_) | Q(email=login_.lower())).get()
             if not user.check_password(password):
                 raise Client.DoesNotExist()
 
