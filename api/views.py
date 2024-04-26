@@ -11,7 +11,10 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Client
+from .models import Client, ParkingStation
+
+
+# region auth
 
 
 class GetMeView(APIView):
@@ -115,3 +118,16 @@ class LogoutView(APIView):
         if request.user.is_authenticated:
             logout(request)
         return Response({"success": True})
+
+
+# endregion
+
+
+class AvailableTransport(APIView):
+    def get(self, request: Request):
+        stations = ParkingStation.objects.all()
+        return Response({
+            "success": True,
+            "data": [station.as_dict for station in stations]
+        })
+
