@@ -12,6 +12,7 @@ SECRET_KEY = 'django-insecure-x$xwmoi0z0%)ck$h823j5l80k!(ym%#9-ttoaca-dz5!nf(wc7
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = ["http://local-host-dev.com"]
 
 
 INSTALLED_APPS = [
