@@ -3,6 +3,7 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Count
 
 
 class Client(AbstractUser):
@@ -62,6 +63,7 @@ class TransportModel(models.Model):
             "type": self.type.as_dict,
             "classification": self.classification.as_dict,
             "name": self.name,
+            "count": self.count if hasattr(self, "count") else None,
         }
 
 
@@ -108,7 +110,7 @@ class ParkingStation(models.Model):
 
     @property
     def available_models(self):
-        return TransportModel.objects.filter(transport__parking=self).all()
+        return TransportModel.objects.filter(transport__parking=self).annotate(count=Count('id')).all()
 
     def __str__(self):
         return f"{self.short_name or self.address} ({self.occupancy} / {self.max_cars})"
