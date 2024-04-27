@@ -4,6 +4,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Count
+from django.conf import settings
 
 
 class Client(AbstractUser):
@@ -50,7 +51,9 @@ class TransportClass(models.Model):
 class TransportModel(models.Model):
     type = models.ForeignKey("TransportType", on_delete=models.CASCADE)
     classification = models.ForeignKey("TransportClass", on_delete=models.CASCADE)
+    description = models.TextField(max_length=256)
     name = models.CharField(max_length=128, unique=True)
+    image = models.ImageField(upload_to=settings.MEDIA_ROOT / "transport_images")
     # max_fuel here if need
 
     def __str__(self):
@@ -63,6 +66,8 @@ class TransportModel(models.Model):
             "type": self.type.as_dict,
             "classification": self.classification.as_dict,
             "name": self.name,
+            "description": self.description,
+            "imageUrl": self.image.url,
             "count": self.count if hasattr(self, "count") else None,
         }
 
