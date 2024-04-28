@@ -136,7 +136,10 @@ class Plan(models.Model):
     name = models.CharField(max_length=32)
     price = models.DecimalField(max_digits=20, decimal_places=2)
     description = models.CharField(max_length=255)
-    time = models.TimeField()
+    time_min = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="Time (Minutes)")
+
+    def __str__(self):
+        return self.name
 
 
 class RentPeriod(models.Model):
