@@ -1,4 +1,4 @@
-
+import datetime
 
 from django.contrib.auth import login, logout
 from django.contrib.auth.password_validation import (UserAttributeSimilarityValidator, MinimumLengthValidator,
@@ -11,7 +11,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Client, ParkingStation
+from .models import Client, ParkingStation, Plan, Transport, RentPeriod, RentPeriodCarUsage
 
 
 # region auth
@@ -131,3 +131,53 @@ class AvailableTransport(APIView):
             "data": [station.as_dict for station in stations]
         })
 
+
+class AvailablePlans(APIView):
+    def get(self, request: Request):
+        plans = Plan.objects.all()
+        return Response({
+            "success": True,
+            "data": [plan.as_dict for plan in plans]
+        })
+
+
+class StartRide(APIView):
+    def post(self, request: Request):
+        if not request.user.is_authenticated:
+            return Response({
+                "success": False,
+                "message": "You are not authenticated",
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        car_id = request.data.get('carId')  # model id
+        plan_id = request.data.get('planId')
+        parking_station_id = request.data.get('parkingStationId')
+
+        if request.user.is_on_ride:
+            car = request.user.change_car(parking_station_id, car_id)
+        else:
+            request.user.start_rent_period(plan_id)
+            car = request.user.take_car(parking_station_id, car_id)
+
+        return Response({
+            "success": True,
+            "data": request.user.json(),
+            "carNumber": car.registry_number
+        })
+
+
+class EndRide(APIView):
+    def post(self, request: Request):
+        if not request.user.is_authenticated:
+            return Response({
+                "success": False,
+                "message": "You are not authenticated",
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        parking_station_id = request.data.get('parkingStationId')
+        request.user.end_all_rents(parking_station_id)
+
+        return Response({
+            "success": True,
+            "data": request.user.json()
+        })

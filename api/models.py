@@ -1,5 +1,9 @@
 
 
+import random
+from datetime import datetime
+from typing import Optional
+
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -15,7 +19,46 @@ class Client(AbstractUser):
             "id": self.id,
             "username": self.username,
             "rating": self.rating,
+            "onRide": self.is_on_ride
         }
+
+    @property
+    def is_on_ride(self) -> bool:
+        return RentPeriod.objects.filter(client=self, finished_at__isnull=True).exists()
+
+    @property
+    def active_rent_period(self) -> "RentPeriod":
+        return RentPeriod.objects.filter(client=self, finished_at__isnull=True).first()
+
+    @property
+    def active_car_usage_period(self) -> "RentPeriodCarUsage":
+        return RentPeriodCarUsage.objects.filter(period=self.active_rent_period, finished_at__isnull=True).first()
+
+    def end_all_rents(self, parking_station_id: int):
+        self.active_rent_period.end_period(parking_station_id)
+
+    def start_rent_period(self, plan_id: int):
+        rent_period = RentPeriod(client=self, plan_id=plan_id)
+        rent_period.save()
+        return rent_period
+
+    def take_car(self, parking_station_id: int, transport_id: int):
+        car = Transport.get_car_by_parking_and_model(parking_station_id, transport_id)
+        car.parking = None
+        car.save()
+
+        rent_period_car_usage = RentPeriodCarUsage(
+            period=self.active_rent_period,
+            transport=car,
+            starting_station_id=parking_station_id
+        )
+        rent_period_car_usage.save()
+        return car
+
+    def change_car(self, parking_station_id: int, new_transport_id: int):
+        self.active_car_usage_period.end_period(parking_station_id)
+        car = self.take_car(parking_station_id, new_transport_id)
+        return car
 
 
 class TransportType(models.Model):
@@ -75,7 +118,6 @@ class TransportModel(models.Model):
 class Transport(models.Model):
     model = models.ForeignKey("TransportModel", on_delete=models.CASCADE)
     parking = models.ForeignKey("ParkingStation", on_delete=models.SET_NULL, null=True)
-    used_by_client = models.ForeignKey("Client", on_delete=models.SET_NULL, null=True, editable=False)
     fuel = models.IntegerField(
         verbose_name="Fuel (percent)",
         default=100,
@@ -85,11 +127,25 @@ class Transport(models.Model):
     registry_number = models.CharField(max_length=50, unique=True)
 
     @property
+    def used_by_client(self) -> Optional[Client]:
+        try:
+            rent_period_car_usage = RentPeriodCarUsage.objects.filter(
+                transport=self, finished_at__isnull=True, finishing_station__isnull=True
+            ).get()
+        except RentPeriodCarUsage.DoesNotExist:
+            return None
+        return rent_period_car_usage.period.client
+
+    @property
     def need_fuel(self):
         return self.fuel < 25
 
     def __str__(self):
         return f"{self.model.name} ({self.registry_number})"
+
+    @classmethod
+    def get_car_by_parking_and_model(cls, parking_station_id, model_id):
+        return Transport.objects.filter(model_id=model_id, parking_id=parking_station_id)[:1].get()
 
     @property
     def as_dict(self):
@@ -102,6 +158,11 @@ class Transport(models.Model):
             "registryNumber": self.registry_number,
             "needFuel": self.need_fuel,
         }
+
+    def save(self, *args, **kwargs):
+        if self.need_fuel:
+            self.fuel = 100
+        super().save(*args, **kwargs)
 
 
 class ParkingStation(models.Model):
@@ -141,6 +202,16 @@ class Plan(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "price": self.price,
+            "description": self.description,
+            "timeMin": self.time_min,
+        }
+
 
 class RentPeriod(models.Model):
     client = models.ForeignKey("Client", on_delete=models.SET_NULL, null=True)
@@ -148,6 +219,14 @@ class RentPeriod(models.Model):
     finished_at = models.DateTimeField(null=True, blank=True)
     plan = models.ForeignKey("Plan", on_delete=models.SET_NULL, null=True)
     fine_overtime = models.IntegerField(default=0)      # todo: pre_save SIGNAL
+
+    @property
+    def active_car_usage_period(self) -> "RentPeriodCarUsage":
+        return RentPeriodCarUsage.objects.filter(period=self, finished_at__isnull=True).first()
+
+    def end_period(self, parking_station_id: int):
+        self.finished_at = self.active_car_usage_period.end_period(parking_station_id)
+        self.save()
 
 
 class RentPeriodCarUsage(models.Model):
@@ -163,6 +242,15 @@ class RentPeriodCarUsage(models.Model):
         "ParkingStation", on_delete=models.SET_NULL,
         null=True, related_name='finishing_station'
     )
+
+    def end_period(self, parking_station_id: int):
+        self.finished_at = datetime.now()
+        self.finishing_station_id = parking_station_id
+        self.transport.fuel -= random.randint(5, 25)
+        self.transport.parking_id = parking_station_id
+        self.transport.save()
+        self.save()
+        return self.finished_at
 
 
 class CompanyAccounting(models.Model):

@@ -12,4 +12,7 @@ urlpatterns = [
     path('auth/logout', views.LogoutView.as_view(), name='logout'),
 
     path('available_transport', views.AvailableTransport.as_view(), name='available_transport'),
+    path('available_plans', views.AvailablePlans.as_view(), name='available_plans'),
+    path('start_ride', views.StartRide.as_view(), name='start_ride'),
+    path('end_ride', views.EndRide.as_view(), name='end_ride'),
 ]
