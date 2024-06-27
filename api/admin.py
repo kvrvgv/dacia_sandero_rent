@@ -10,6 +10,21 @@ class ClientAdmin(admin.ModelAdmin):
     pass
 
 
+@admin.register(models.TransportType)
+class TransportTypeAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.TransportClass)
+class TransportClassAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.TransportModel)
+class TransportModelAdmin(admin.ModelAdmin):
+    pass
+
+
 @admin.register(models.Transport)
 class TransportAdmin(admin.ModelAdmin):
     pass

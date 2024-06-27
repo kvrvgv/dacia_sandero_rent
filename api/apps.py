@@ -3,6 +3,6 @@
 from django.apps import AppConfig
 
 
-class RentConfig(AppConfig):
+class ApiConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'rent'
+    name = 'api'
